@@ -1,0 +1,10 @@
+####{BSB GENERATED: NO EDIT
+FLG -ppx "c:\Users\rafael\Desktop\tudo\js\acno\node_modules\bs-platform\win32\bsc.exe -as-ppx "
+S c:\Users\rafael\Desktop\tudo\js\acno\node_modules\bs-platform\lib\ocaml
+B c:\Users\rafael\Desktop\tudo\js\acno\node_modules\bs-platform\lib\ocaml
+FLG -w +a-4-9-20-40-41-42-50-61-102
+S src
+B lib\bs\src
+S src\bindings
+B lib\bs\src\bindings
+####BSB GENERATED: NO EDIT}
