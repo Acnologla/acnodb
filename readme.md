@@ -24,14 +24,14 @@ Schema.set(users, "acno", {
     username: "y",
     x: 0,
     tag: "xxx"
-})
+});
 
 //get
-Schema.get(users, "acno")
+Schema.get(users, "acno");
 
 //remove
 
-Schema.delete(users, "acno")
+Schema.delete(users, "acno");
 
 //find by value
 let acno = Schema.find(users, (key, value) => value.username == "acno");
