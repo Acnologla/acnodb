@@ -2,6 +2,20 @@
 
 A simple json database (document oriented) reason database
 
+## Installation
+
+```
+npm i acnodb
+```
+
+Then add acnodb as a dependency to bsconfig.json:
+
+```
+"bs-dependencies": [
++  "rescript-hash"
+]
+```
+
 ## Usage
 ```re
 open Schema;
@@ -19,6 +33,15 @@ Schema.set(users, "acno", {
     x: 0,
     tag: "xxx"
 });
+
+//watch changes
+Schema.watch(users, (key, value, operation) => 
+  switch(operation){
+    | Set => Js.log("Set")
+    | Update => Js.log("Update")
+    | Delete => Js.log("Delete")
+  }
+)
 
 //get
 Schema.get(users, "acno");
