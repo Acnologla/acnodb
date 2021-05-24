@@ -23,7 +23,7 @@ module Schema = {
       None;
     } else {
       let (key, value) = values[i];
-      callback(key, value) ? Some(key) : loop(i + 1, callback, values)
+      callback(key, value) ? Some(key) : loopKey(i + 1, callback, values)
     };
   let findKey = (schema, callback) =>
     Js.Dict.entries(schema.data) |> loopKey(0, callback);
