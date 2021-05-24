@@ -7,55 +7,49 @@ module Schema = {
   type t('a) = {
     name: string,
     mutable watchers: list((string, 'a, watcherOps) => unit),
-    data: Hashtbl.t(string, 'a),
+    data: Js.Dict.t('a),
   };
   let mut = (schema, key, value, watcherOp) =>
     List.iter(watcher => watcher(key, value, watcherOp), schema.watchers);
+  let rec loop = (i, callback, values) =>
+    if (i >= Array.length(values)) {
+      None;
+    } else {
+      let (key, value) = values[i];
+      callback(key, value) ? Some(value) : loop(i + 1, callback, values);
+    };
+  let rec loopKey = (i, callback, values) =>
+    if (i >= Array.length(values)) {
+      None;
+    } else {
+      let (key, value) = values[i];
+      callback(key, value) ? Some(key) : loop(i + 1, callback, values)
+    };
   let findKey = (schema, callback) =>
-    Hashtbl.fold(
-      (key, value, acc) =>
-        switch (acc) {
-        | Some(_) => acc
-        | None => callback(key, value) ? Some(key) : None
-        },
-      schema.data,
-      None,
-    );
+    Js.Dict.entries(schema.data) |> loopKey(0, callback);
   let find = (schema, callback) =>
-    Hashtbl.fold(
-      (key, value, acc) =>
-        switch (acc) {
-        | Some(_) => acc
-        | None => callback(key, value) ? Some(value) : None
-        },
-      schema.data,
-      None,
-    );
-  let each = (schema, callback) => Hashtbl.iter(callback, schema.data);
-  let get = (schema, key) => Hashtbl.find(schema.data, key);
+    Js.Dict.entries(schema.data) |> loop(0, callback);
+  let each = (schema, callback) =>
+    Array.iter(callback, Js.Dict.entries(schema.data));
+  let get = (schema, key) => Js.Dict.get(schema.data, key);
   let delete = (schema, key) => {
-    Hashtbl.remove(schema.data, key);
-    mut(schema, key, get(schema, key), Delete);
+    Js.Dict.unsafeDeleteKey(. schema.data, key);
+    mut(schema, key, Js.Dict.unsafeGet(schema.data, key), Delete);
   };
   let saveSchema = schema => {
     let name = schema.name;
     let path = Sys.getcwd() ++ {j|/data/$name.json|j};
-    let json = Js.Dict.empty();
-    Hashtbl.iter(
-      (key, value) => Js.Dict.set(json, key, value),
-      schema.data,
-    );
-    switch (Js.Json.stringifyAny(json)) {
+    switch (Js.Json.stringifyAny(schema.data)) {
     | Some(value) => Fs.writeFileSync(path, value)
     };
   };
   let set = (~save=true, schema, key, value) => {
-    switch (Hashtbl.find(schema.data, key)) {
-    | exception Not_found =>
-      Hashtbl.add(schema.data, key, value);
+    switch (get(schema, key)) {
+    | None =>
+      Js.Dict.set(schema.data, key, value);
       mut(schema, key, value, Set);
     | _ =>
-      Hashtbl.replace(schema.data, key, value);
+      Js.Dict.set(schema.data, key, value);
       mut(schema, key, value, Update);
     };
     if (save) {
@@ -89,7 +83,7 @@ module Schema = {
 
 open Schema;
 let newSchema = name => {
-  let schema = {name, data: Hashtbl.create(0), watchers: []};
+  let schema = {name, data: Js.Dict.empty(), watchers: []};
   initSchema(schema);
   schema;
 };
