@@ -16,7 +16,7 @@ module Schema = {
   type t('a) = {
     name: string,
     mutable watchers: list(watcher('a)),
-    data: Js.Dict.t('a),
+    data: Js.Dict.t('a)
   };
   let mut = (schema, key, value, watcherOp) =>
     List.iter(
