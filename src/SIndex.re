@@ -5,11 +5,6 @@ type entry('a) = {
   key: string,
 };
 
-let toJson = value =>
-  switch (Js.Json.stringifyAny(value)) {
-  | Some(json) => Schema.parse(json)
-  };
-
 let get = (json, key ) => 
     switch (Js.Dict.get(json, key)) {
     | Some(value) => value
@@ -20,14 +15,14 @@ let createIndex = (schema, index) => {
   Schema.each(
     schema,
     ((key, value)) => {
-      let json = toJson(value);
+      let json = Obj.magic(value);
       Hashtbl.add(data, get(json, index), [{value, key}]);
     },
   );
   Schema.watch(
     schema,
     (newKey, newValue, op) => {
-      let json = toJson(newValue);
+      let json = Obj.magic(newValue);
       let indexKey = get(json, index);
       switch (Hashtbl.find(data, indexKey)) {
       | value =>
