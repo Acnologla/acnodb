@@ -1,13 +1,8 @@
 open Schema;
 
-type entry = string;
+let get = (json, key) => Js.Option.getExn(Js.Dict.get(json, key));
 
-let get = (json, key) =>
-  switch (Js.Dict.get(json, key)) {
-  | Some(value) => value
-  };
-
-let rec update = (data, index ,newKey, indexKey, oldValue, op) =>
+let rec update = (data, index, newKey, indexKey, oldValue, op) =>
   switch (Hashtbl.find(data, indexKey)) {
   | value =>
     switch (op) {
@@ -24,8 +19,8 @@ let rec update = (data, index ,newKey, indexKey, oldValue, op) =>
     | Update =>
       let oldVal = Obj.magic(oldValue)->get(index);
       if (oldVal != indexKey) {
-        update(data, index, newKey, oldVal, oldValue, Delete)
-        update(data, index, newKey, indexKey, oldValue, Set)
+        update(data, index, newKey, oldVal, oldValue, Delete);
+        update(data, index, newKey, indexKey, oldValue, Set);
       };
     }
   | exception Not_found =>
@@ -40,7 +35,7 @@ let createIndex = (schema, index) => {
     schema,
     ((key, value)) => {
       let json = Obj.magic(value);
-      update(data, index, key,get(json, index), None, Set )
+      update(data, index, key, get(json, index), None, Set);
     },
   );
   Schema.watch(

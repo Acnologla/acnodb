@@ -45,11 +45,10 @@ module Schema = {
     Array.iter(callback, Js.Dict.entries(schema.data));
   let get = (schema, key) => Js.Dict.get(schema.data, key);
   let saveSchema = schema => {
-    let name = schema.name;
+    let {name} = schema;
     let path = Sys.getcwd() ++ {j|/data/$name.json|j};
-    switch (Js.Json.stringifyAny(schema.data)) {
-    | Some(value) => Fs.writeFileSync(path, value)
-    };
+    let value = Js.Option.getExn(Js.Json.stringifyAny(schema.data));
+    Fs.writeFileSync(path, value)
   };
   let watcherExists = (schema, path) =>
     List.exists(watcher => watcher.path == path, schema.watchers);
