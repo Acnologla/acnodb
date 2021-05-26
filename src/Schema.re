@@ -10,20 +10,21 @@ let (<$>) = func =>
 
 module Schema = {
   type watcher('a) = {
-    callback: (string, 'a, watcherOps) => unit,
+    callback: (string, 'a, option('a), watcherOps) => unit,
     path: string,
   };
   type t('a) = {
     name: string,
     mutable watchers: list(watcher('a)),
-    data: Js.Dict.t('a)
+    data: Js.Dict.t('a),
   };
-  let mut = (schema, key, value, watcherOp) =>
+  let mut = (schema, key, value, oldValue, watcherOp) =>
     List.iter(
       watcher =>
         switch (watcher.path) {
-        | "*" => watcher.callback(key, value, watcherOp)
-        | path => path == key ? watcher.callback(key, value, watcherOp) : ()
+        | "*" => watcher.callback(key, value, oldValue, watcherOp)
+        | path =>
+          path == key ? watcher.callback(key, value, oldValue, watcherOp) : ()
         },
       schema.watchers,
     );
@@ -53,18 +54,18 @@ module Schema = {
   let watcherExists = (schema, path) =>
     List.exists(watcher => watcher.path == path, schema.watchers);
   let delete = (schema, key) => {
+    mut(schema, key, Js.Dict.unsafeGet(schema.data, key), None ,Delete);
     Js.Dict.unsafeDeleteKey(. schema.data, key);
-    mut(schema, key, Js.Dict.unsafeGet(schema.data, key), Delete);
     saveSchema(schema);
   };
   let set = (~save=true, schema, key, value) => {
     switch (get(schema, key)) {
     | None =>
       Js.Dict.set(schema.data, key, value);
-      mut(schema, key, value, Set);
-    | _ =>
+      mut(schema, key, value, None, Set);
+    | oldVal =>
       Js.Dict.set(schema.data, key, value);
-      mut(schema, key, value, Update);
+      mut(schema, key, value, oldVal, Update);
     };
     if (save) {
       saveSchema(schema);

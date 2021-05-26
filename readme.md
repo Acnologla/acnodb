@@ -35,7 +35,7 @@ Schema.set(users, "acno", {
 });
 
 //watch changes
-Schema.watch(users, (key, value, operation) => 
+Schema.watch(users, (key, value, oldValue, operation) => 
   switch(operation){
     | Set => Js.log("Set")
     | Update => Js.log("Update")
@@ -51,6 +51,13 @@ Schema.get(users, "acno");
 Schema.delete(users, "acno");
 
 //find by value
-let acno = Schema.find(users, (key, value) => value.username == "acno");
+let u = Schema.find(users, (key, value) =>  value.username == "k");
 Js.log(acno);
+
+//Create indexes
+let userIndex = SIndex.createIndex(users, "username");
+
+//Get value from index
+let uKeys = Hashtbl.find(userIndex, "acno")
+
 ```
